@@ -888,7 +888,7 @@ class EstimatorQuantumFunction(torch.autograd.Function):
             param_values = np.concatenate([data_vals, u3_vals, cu3_vals])
 
             # 批量绑定参数（仅一次）
-            bound_qc = ctx.transpiled_qc.assign_parameters(dict(zip(ctx.all_123circuit_params, param_values)))
+            bound_qc = ctx.transpiled_qc.assign_parameters(dict(zip(ctx.all_circuit_params, param_values)))
 
             # 计算所有观测器的期望值（1电路+1观测器，符合Qiskit要求）
             exp_vals = []
