@@ -28,6 +28,7 @@ class Arguments:
         self.exploration = [0.001, 0.002, 0.003]
         
         self.backend    = 'qi'      # 'tq' for TorchQuantum; 'qi' for Qiskit Aer Simulator; 'qml' for PennyLane
+        self.noise = False
         self.digits_of_interest = [0, 1, 2, 3]
         self.train_valid_split_ratio = [0.95, 0.05]
         self.center_crop = 24

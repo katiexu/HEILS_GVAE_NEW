@@ -13,8 +13,6 @@ from Arguments import Arguments
 import random
 from tqdm import tqdm
 
-
-
 def get_param_num(model):
     total_num = sum(p.numel() for p in model.parameters())
     trainable_num = sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -36,8 +34,8 @@ def display(metrics):
     
 def train(model, data_loader, optimizer, criterion, args):
     model.train()
+    for feed_dict in tqdm(data_loader, desc="Training", disable=True):
     # for feed_dict in data_loader:
-    for feed_dict in tqdm(data_loader, desc="Training"):
         images = feed_dict['image'].to(args.device)
         targets = feed_dict['digit'].to(args.device)    
         optimizer.zero_grad()
@@ -52,8 +50,7 @@ def test(model, data_loader, criterion, args):
     target_all = torch.Tensor().to(args.device)
     output_all = torch.Tensor().to(args.device)
     with torch.no_grad():
-        # for feed_dict in data_loader:
-        for feed_dict in tqdm(data_loader, desc="Testing"):
+        for feed_dict in data_loader:
             images = feed_dict['image'].to(args.device)
             targets = feed_dict['digit'].to(args.device)        
             output = model(images, args.n_qubits, args.task)
@@ -74,12 +71,15 @@ def test(model, data_loader, criterion, args):
 def evaluate(model, data_loader, args):
     model.eval()
     metrics = {}
+    if args.backend == 'qi':
+        tqdm_disable = False
+    else:
+        tqdm_disable = True
     
     with torch.no_grad():
-        # for feed_dict in data_loader:
-        for feed_dict in tqdm(data_loader, desc="Evaluating"):
-            images = feed_dict['image'].to(args.device)
-            targets = feed_dict['digit'].to(args.device)        
+        for feed_dict in tqdm(data_loader, desc="Evaluating", disable=tqdm_disable):
+            images = feed_dict['image'][:10].to(args.device)
+            targets = feed_dict['digit'][:10].to(args.device)
             output = model(images, args.n_qubits, args.task)
 
     _, indices = output.topk(1, dim=1)
@@ -88,12 +88,15 @@ def evaluate(model, data_loader, args):
     corrects = masks.sum().item()
     accuracy = corrects / size
 
-    metrics = accuracy    
+    metrics = accuracy
+    # metrics = output.cpu().numpy()
     return metrics
 
-def Scheme_eval(design, task, weight):
+def Scheme_eval(design, task, weight, noise=None):
     result = {}  
-    args = Arguments(**task) 
+    args = Arguments(**task)
+    if noise:
+        args.noise = True
     path = 'weights/'  
     if task['task'].startswith('QML'):
         dataloader = qml_Dataloaders(args)
@@ -103,8 +106,8 @@ def Scheme_eval(design, task, weight):
     train_loader, val_loader, test_loader = dataloader
     model = QNet(args, design).to(args.device)
     model.load_state_dict(torch.load(path+weight), strict= False)
-    result['mae'] = evaluate(model, test_loader, args)
-    return model, result
+    result['acc'] = evaluate(model, test_loader, args)
+    return result
 
 def Scheme(design, task, weight='base', epochs=None, verbs=None, save=None):
     seed = 42
@@ -136,10 +139,11 @@ def Scheme(design, task, weight='base', epochs=None, verbs=None, save=None):
     train_loss_list, val_loss_list = [], []
     best_val_loss = 0
     start = time.time()
-    best_model = model
+    best_model = model   
+
     if epochs == 0:
-        print('No training epochs specified, skipping training.')        
-    else:        
+        print('No training epochs specified, skipping training.')
+    else:
         for epoch in range(epochs):
             try:
                 train(model, train_loader, optimizer, criterion, args)
@@ -201,6 +205,7 @@ if __name__ == '__main__':
     'n_qubits': 4,
     'n_layers': 4,
     'fold': 1,
+    'backend': 'tq'
     }
 
     # task = {
@@ -228,7 +233,12 @@ if __name__ == '__main__':
     # design = op_list_to_design(op_list, arch_code)
     design = single_enta_to_design(single, enta, arch_code, args.fold)
 
-    best_model, report = Scheme(design, task, 'init', 10, verbs=False, save=True)
-    
+    # best_model, report = Scheme(design, task, 'init', 1, verbs=False, save=False)
+    # torch.save(best_model.state_dict(), 'weights/tmp')
+   
+    result = Scheme_eval(design, task, 'tmp_4', noise=False)
+    display(result)
+    result = Scheme_eval(design, task, 'tmp_4', noise=True)
+    display(result)
 
     # torch.save(best_model.state_dict(), 'weights/base_fashion')
