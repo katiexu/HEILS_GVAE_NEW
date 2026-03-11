@@ -5,6 +5,7 @@ class Arguments:
         n_layers = kwargs.get('n_layers', 4)
         task = kwargs.get('task', 'MNIST')
         fold = kwargs.get('fold', 1)
+        self.backend = kwargs.get('backend', 'tq')
 
         # Qiskit arguments
         self.use_noise_model_train = False
@@ -27,7 +28,7 @@ class Arguments:
         self.n_layers = n_layers      
         self.exploration = [0.001, 0.002, 0.003]
         
-        self.backend    = 'qi'      # 'tq' for TorchQuantum; 'qi' for Qiskit Aer Simulator; 'qml' for PennyLane
+        self.backend    = 'tq'      # 'tq' for TorchQuantum; 'qi' for Qiskit Aer Simulator; 'qml' for PennyLane
         self.noise = False
         self.digits_of_interest = [0, 1, 2, 3]
         self.train_valid_split_ratio = [0.95, 0.05]
@@ -40,6 +41,8 @@ class Arguments:
         self.init_weight = 'init_weight_'+ task
         self.SNR = 0.5
         self.strategy = 'mix'
+        self.qiskit_seed=170
+        self.shots=10000
 
 
         if task == ('MNIST_10' or 'FASHION_10'):
