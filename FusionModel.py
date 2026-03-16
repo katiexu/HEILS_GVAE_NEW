@@ -293,13 +293,8 @@ class EstimatorQiskitLayer(nn.Module):
         self._init_Noisemodel()
         self._init_estimator()
     def _init_Noisemodel(self):
-        self.noise_model = NoiseModel()
-        u3_error = depolarizing_error(0.05, 1)
-        self.noise_model.add_all_qubit_quantum_error(u3_error, ['u3', 'u'])
-        cu3_error = depolarizing_error(0.05, 2)
-        self.noise_model.add_all_qubit_quantum_error(cu3_error, ['cu3', 'cu'])
-        readout_error = ReadoutError([[0.98, 0.02], [0.03, 0.97]])
-        self.noise_model.add_all_qubit_readout_error(readout_error)
+        from MyNoiseModel import create_noise_model
+        self.noise_model=create_noise_model('heron_r1')
     def _init_estimator(self):
         """Initialize noise-free Estimator compatible with GenericBackendV2"""
         self.estimator = Estimator(

@@ -535,13 +535,12 @@ if __name__ == '__main__':
     # best_model, report = Scheme(design, task, 'init', 1, verbs=False, save=False)
     # torch.save(best_model.state_dict(), 'weights/tmp')
    
-    # result = Scheme_eval(design, task, 'tmp_4', backend='tq')
-    # display(result)
+    result = Scheme_eval(design, task, 'tmp_4', backend='tq')
+    display(result)
     # # result = Scheme_eval(design, task, 'tmp_4', backend='qi',noise=False)
     # # display(result)
-    for i in range(3):
-        result = Scheme_eval(design, task, 'tmp_4', backend='qi',noise=True,seed=170,shots=50)
-        display(result)
+    result = Scheme_eval(design, task, 'tmp_4', backend='qi',noise=True,seed=170,shots=10000)
+    display(result)
 
     # compare_two_models(design=design,weight='tmp_4',task=task,backend1='tq',backend2='qi',noise=True,shots=10000,save_path='two_models_comparison.png')
 
